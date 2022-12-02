@@ -5,35 +5,35 @@ The code is written with the goal for users to send $ to their friends easily fo
 
 ## Introduction
 PayNow QR is one of the many QR codes payment systems available in Singapore, developed by the Association of Banks in Singapore. Major banks such as DBS/POSB, OCBC, UOB supports it 
-([Full list here](https://www.abs.org.sg/consumer-banking/pay-now) )
+([Full list here](https://www.abs.org.sg/consumer-banking/pay-now))
 
-Other types of QR codes include those from other organisations, such as GrabPay, FavePay, Alipay, WeChat Pay or whatever nonsense. To prevent stalls from having to display 1001 QR codes, SGQR was launched to have a standardardised QR code format for all payment providers, essentially condensing all QR codes into one. The SGQR specifications are then based on guidelines issued by EMVCo.
+Other types of QR codes include those from other organisations, such as GrabPay, FavePay, Alipay, WeChat Pay or whatever nonsense. To prevent stalls from having to display 1001 QR codes, SGQR was launched to have a standardardised QR code format for all payment providers, essentially condensing all QR codes into one. The SGQR specifications are then based on guidelines issued by EMVCo. <br>
 **Specifications TLDR: PayNow ⊂ SGQR ⊂ EMVCo**
 
 ## Understanding the format
 Scanning a PayNow QR (with any normal QR code scanner will give a string of characters).
-> Example: **00**<u>02</u>01**01**<u>02</u>11**26**<u>43</u>0009SG.PAYNOW010120210T04SS0129D030110502QS**51**<u>81</u>0007SG.SGQR011221073031741D020701.00010306600316040201050327906040000070820210730**52**<u>04</u>0000**53**<u>03</u>702**58**<u>02</u>SG**59**<u>25</u>LOVING HEART MULTI-SERVIC**60**<u>09</u>Singapore**63**<u>04</u>A177
+> Example: **00**<ins>02</ins>01**01**<ins>02</ins>11**26**<ins>43</ins>0009SG.PAYNOW010120210T04SS0129D030110502QS**51**<ins>81</ins>0007SG.SGQR011221073031741D020701.00010306600316040201050327906040000070820210730**52**<ins>04</ins>0000**53**<ins>03</ins>702**58**<ins>02</ins>SG**59**<ins>25</ins>LOVING HEART MULTI-SERVIC**60**<ins>09</ins>Singapore**63**<ins>04</ins>A177
 
-There are some details that are pretty obvious, like the receipent name. From here, all we need to do is to refer to the datasheets and reverse engineer the result to figure out the meaning of different fields.
+There are some details that are pretty obvious, like the recipient name. From here, all we need to do is to refer to the datasheets and reverse engineer the result to figure out the meaning of different fields.
 
 Each data object is made up of 3 different fields:
 1. **ID** (00-99)
-2. <u>Length of value</u> (01-99)
+2. <ins>Length of value</ins> (01-99)
 3. Value (any characters)
 
-From the example above, we can make sense of the string "**00**<u>02</u>01" as the first ID field starting at '00' having a value length of '02' containing the value '01'.
+From the example above, we can make sense of the string "**00**<ins>02</ins>01" as the first ID field starting at '00' having a value length of '02' containing the value '01'.
 
 There can be nested data objects (value field is another data object, something like JSON). ID '26' has an example of nested data object.
-> **00**<u>09</u>SG.PAYNOW**01**<u>01</u>2**02**<u>10</u>T04SS0129D**03**<u>01</u>1**05**<u>02</u>QS
+> **00**<ins>09</ins>SG.PAYNOW**01**<ins>01</ins>2**02**<ins>10</ins>T04SS0129D**03**<ins>01</ins>1**05**<ins>02</ins>QS
 
 ## Important Fields for PayNow 
 These are for the root fields aka the outer data objects (not nested).
 
 | ID | Name | Purpose |
 | ------ | ------ | ------ |
-| 00 | Payload Format Indicator | Defines the version used (version 1) ∴ Fixed at "**00**<u>02</u>01"<br> **<u>First object</u>** under the root. |
+| 00 | Payload Format Indicator | Defines the version used (version 1) ∴ Fixed at "**00**<ins>02</ins>01"<br> **<ins>First object</ins>** under the root. |
 | 01 | Point of Initiation Method | Static (same QR Code is shown for more than one transaction)- '11' <br> Dynamic (new QR Code is shown for each transaction)- '12' |
-| 26 | Merchant Account Information | 02-25 is reserved (Table 4.3 of EMVCo pdf). <br> 26-50 is used for payment systems registered with SGQR, ID **26** in particular is usually used for PayNow. Other merchants information will take the subsequent IDs in order of registration. <br><br> PayNow payload (nested):<br> "**00**" - Reverse Domain Name. Fixed at “**00**<u>09</u>SG.PAYNOW” <br> "**01**" - Proxy Type. '0' for mobile number, '2' for UEN. <br> "**02**" - Proxy Value. Mobile/UEN number. <br> <i> <li>Mobile: <'+' International Dialling Code> followed by <up to 15-digit Mobile Number>. SG is '+65' </li><li> UEN: 9 or 10 (without suffix) OR 12 or 13 (with suffix) characters. </i></li> "**03**" - Editable. '0' for amount cannot be edited, '1' otherwise. <br> "**04**" - Expiry date (Optional). YYYYMMDD <br> "**05**" - Transaction Reference (Optional) - For record tracking, can be any characters. _Removed in PayNow v1.2. Use ID **62** -> Nested ID **01** Bill Number instead._|
+| 26 | Merchant Account Information | 02-25 is reserved (Table 4.3 of EMVCo pdf). <br> 26-50 is used for payment systems registered with SGQR, ID **26** in particular is usually used for PayNow. Other merchants information will take the subsequent IDs in order of registration. <br><br> PayNow payload (nested):<br> "**00**" - Reverse Domain Name. Fixed at “**00**<ins>09</ins>SG.PAYNOW” <br> "**01**" - Proxy Type. '0' for mobile number, '2' for UEN. <br> "**02**" - Proxy Value. Mobile/UEN number. <br> <i> <li>Mobile: <'+' International Dialling Code> followed by <up to 15-digit Mobile Number>. SG is '+65' </li><li> UEN: 9 or 10 (without suffix) OR 12 or 13 (with suffix) characters. </i></li> "**03**" - Editable. '0' for amount cannot be edited, '1' otherwise. <br> "**04**" - Expiry date (Optional). YYYYMMDD <br> "**05**" - Transaction Reference (Optional) - For record tracking, can be any characters. _Removed in PayNow v1.2. Use ID **62** -> Nested ID **01** Bill Number instead._|
 | 51 | SGQR ID | Not mandatory for generating PayNow QR. <br> Used to identify each SGQR label (version, date of creation, physical location etc) |
 | 52 | Merchant Category Code | 4-digits code to classify businesses (ISO 18245). <br> '0000' if not applicable. |
 | 53 | Transaction Currency  | 3-digits currency code (ISO 4217). <br> '702' for SGD. |
@@ -49,7 +49,7 @@ These are for the root fields aka the outer data objects (not nested).
 | 64 | Merchant Information Language Template | Merchant information in an alternate language. <br>Not important. |
 | 65-79 | RFU for EMVCo | Data objects for EMVCo. <br> Not important. |
 | 80-99 | Unreserved templates | Self-explanatory. <br> Not important. |
-| 63 | CRC | Checksum calculated according to (ISO/IEC 13239). <br> **<u>Last object</u>** under the root. |
+| 63 | CRC | Checksum calculated according to (ISO/IEC 13239). <br> **<ins>Last object</ins>** under the root. |
 
 ## CRC explanation
 >4.7.3.1 The checksum shall be calculated according to [ISO/IEC 13239] using the polynomial 
@@ -80,7 +80,7 @@ ISO 13239 (section 4.2.5.2) uses the polynomial  x<sup>16</sup> + x<sup>12</sup>
 The result of the CRC will produce a 2-byte hexadecimal value (16 bits). Then, convert each nibble (4 bits) to its corresponding uppercase hex value 0-F, resulting in a 4-character hex value.
 >61828 -> 1111 0001 1000 0100 -> F184
 
-Therefore, all we need to do is to run the algorithm with the information string with the relevant fields populated (including '**63**<u>04</u>' at the end) to get the checksum and append it back to the original string to complete the information string.
+Therefore, all we need to do is to run the algorithm with the information string with the relevant fields populated (including '**63**<ins>04</ins>' at the end) to get the checksum and append it back to the original string to complete the information string.
 
 
 ## Reference
